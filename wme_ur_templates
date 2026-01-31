@@ -1,0 +1,223 @@
+// ==UserScript==
+// @name         WME UR Response Templates
+// @namespace    https://greasyfork.org/users/your-username
+// @version      1.0
+// @description  Quick response templates for Waze UR in multiple languages
+// @author       Cuki
+// @match        https://www.waze.com/editor*
+// @match        https://www.waze.com/*/editor*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    const TEMPLATES = {
+        HU: "Szia, milyen problémával találkoztál? Írd meg kérlek. Ha véletlen volt a jelentés, jelezd vissza, hogy lezárhassuk. Üdv: Attila",
+        EN: "Hello, What problem did you encounter at the marked location? If this report is a mistake, please confirm so we can close the report. Thanks, Attila",
+        DE: "Hallo, welches Problem hast du an der markierten Stelle festgestellt? Falls diese Meldung ein Versehen war, bestätige dies bitte kurz, damit wir den Bericht schließen können. Danke, Attila",
+        CZ: "Ahoj, jaký problém jsi zaznamenal na označeném místě? Pokud bylo toto hlášení omylem, prosím, potvrď to, abychom mohli zprávu uzavřít. Díky, Attila",
+        PL: "Cześć, jaki problem napotkałeś w oznaczonym miejscu? Jeśli ten raport był pomyłką, potwierdź to, proszę, abyśmy mogli zamknąć zgłoszenie. Dzięki, Attila",
+        SK: "Ahoj, aký problém si zaznamenal na označenom mieste? Ak bolo toto hlásenie omylom, prosím, potvrď to, aby sme mohli správu uzavrieť. Díky, Attila",
+        SLO: "Živjo, kakšen problem si opazil na označenem mestu? Če je bilo to poročilo pomotoma, prosim, potrdi, da ga lahko zapremo. Hvala, Attila",
+        NL: "Hallo, welk probleem heb je op de gemarkeerde locatie vastgesteld? Als dit rapport een vergissing was, bevestig dit dan even, zodat we het rapport kunnen sluiten. Bedankt, Attila",
+        RO: "Salut, ce problemă ai întâmpinat la locația marcată? Dacă acest raport a fost o greșeală, te rog să confirmi, ca să putem închide raportul. Mulțumesc, Attila",
+        SR: "Здраво Вазер, Шта је тачно проблем овде да бисмо га решили? Ако је пријава случајна, потврдите да бисмо могли да затворимо извештај. Хвала",
+        DK: "Hej, hvilket problem stødte du på ved det markerede sted? Hvis denne indberetning var en fejl, må du meget gerne bekræfte det, så vi kan lukke rapporten. Tak, Attila"
+    };
+
+    const LANGUAGE_NAMES = {
+        HU: "🇭🇺 Magyar",
+        EN: "🇬🇧 English",
+        DE: "🇩🇪 Deutsch",
+        CZ: "🇨🇿 Čeština",
+        PL: "🇵🇱 Polski",
+        SK: "🇸🇰 Slovenčina",
+        SLO: "🇸🇮 Slovenščina",
+        NL: "🇳🇱 Nederlands",
+        RO: "🇷🇴 Română",
+        SR: "🇷🇸 Српски",
+        DK: "🇩🇰 Dansk"
+    };
+
+    // Create panel HTML
+    const panelHTML = `
+        <div id="ur-templates-panel" style="
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            width: 400px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 9999;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        ">
+            <div id="ur-templates-header" style="
+                background: rgba(0,0,0,0.2);
+                padding: 12px 15px;
+                cursor: move;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            ">
+                <span style="color: white; font-weight: bold; font-size: 14px;">📝 UR Response Templates</span>
+                <div>
+                    <button id="ur-templates-minimize" style="
+                        background: rgba(255,255,255,0.2);
+                        border: none;
+                        color: white;
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        margin-right: 5px;
+                        font-weight: bold;
+                    ">_</button>
+                    <button id="ur-templates-close" style="
+                        background: rgba(255,255,255,0.2);
+                        border: none;
+                        color: white;
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-weight: bold;
+                    ">×</button>
+                </div>
+            </div>
+            <div id="ur-templates-content" style="padding: 15px;">
+                <div style="margin-bottom: 12px;">
+                    <label style="color: white; font-size: 12px; display: block; margin-bottom: 5px;">Select Language:</label>
+                    <select id="ur-language-select" style="
+                        width: 100%;
+                        padding: 8px;
+                        border: none;
+                        border-radius: 6px;
+                        background: white;
+                        font-size: 13px;
+                        cursor: pointer;
+                    ">
+                        ${Object.keys(TEMPLATES).map(lang =>
+                            `<option value="${lang}">${LANGUAGE_NAMES[lang]}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <textarea id="ur-template-text" readonly style="
+                        width: 100%;
+                        height: 120px;
+                        padding: 10px;
+                        border: none;
+                        border-radius: 6px;
+                        resize: vertical;
+                        font-size: 13px;
+                        line-height: 1.5;
+                        box-sizing: border-box;
+                    ">${TEMPLATES.HU}</textarea>
+                </div>
+                <button id="ur-copy-btn" style="
+                    width: 100%;
+                    padding: 10px;
+                    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                    border: none;
+                    border-radius: 6px;
+                    color: white;
+                    font-weight: bold;
+                    cursor: pointer;
+                    font-size: 13px;
+                    transition: all 0.3s;
+                ">📋 Copy to Clipboard</button>
+            </div>
+        </div>
+    `;
+
+    // Wait for page to load
+    function init() {
+        if (document.getElementById('ur-templates-panel')) return;
+
+        document.body.insertAdjacentHTML('beforeend', panelHTML);
+
+        const panel = document.getElementById('ur-templates-panel');
+        const header = document.getElementById('ur-templates-header');
+        const content = document.getElementById('ur-templates-content');
+        const languageSelect = document.getElementById('ur-language-select');
+        const templateText = document.getElementById('ur-template-text');
+        const copyBtn = document.getElementById('ur-copy-btn');
+        const minimizeBtn = document.getElementById('ur-templates-minimize');
+        const closeBtn = document.getElementById('ur-templates-close');
+
+        // Language change handler
+        languageSelect.addEventListener('change', function() {
+            templateText.value = TEMPLATES[this.value];
+        });
+
+        // Copy button handler
+        copyBtn.addEventListener('click', function() {
+            templateText.select();
+            document.execCommand('copy');
+
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '✅ Copied!';
+            copyBtn.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+                copyBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+            }, 1500);
+        });
+
+        // Minimize handler
+        let isMinimized = false;
+        minimizeBtn.addEventListener('click', function() {
+            isMinimized = !isMinimized;
+            content.style.display = isMinimized ? 'none' : 'block';
+            minimizeBtn.innerHTML = isMinimized ? '□' : '_';
+        });
+
+        // Close handler
+        closeBtn.addEventListener('click', function() {
+            panel.style.display = 'none';
+        });
+
+        // Make draggable
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+
+        header.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+
+        function dragStart(e) {
+            initialX = e.clientX - panel.offsetLeft;
+            initialY = e.clientY - panel.offsetTop;
+            isDragging = true;
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                panel.style.left = currentX + 'px';
+                panel.style.top = currentY + 'px';
+                panel.style.right = 'auto';
+            }
+        }
+
+        function dragEnd() {
+            isDragging = false;
+        }
+    }
+
+    // Initialize when WME is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        setTimeout(init, 1000);
+    }
+})();
