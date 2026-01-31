@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Waze POI Creator PRO v7.0 (En-Hu)
 // @namespace    http://tampermonkey.net/
-// @version      2026.01.18.7.0
+// @version      2026.01.16.7.0
 // @description  Create POI with F9 key, point or area. 
 // @match        https://www.waze.com/editor*
 // @match        https://www.waze.com/*/editor*
