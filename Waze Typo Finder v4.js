@@ -298,7 +298,7 @@
         foundItems = [];
         document.getElementById('typo-results').style.display = 'none';
         document.getElementById('typo-no-results').style.display = 'none';
-        //console.log('🗑️ Találatok törölve');
+        //console.log('Találatok törölve');
     }
 
     function performSearch() {
@@ -546,7 +546,7 @@
 
     function selectFoundItem(index) {
         const item = foundItems[index];
-        //console.log(`🎯 Kiválasztva: ${item.name}`);
+        //console.log(`Kiválasztva: ${item.name}`);
 
         if (item.type === 'segment') {
             W.selectionManager.setSelectedModels([item.obj]);
